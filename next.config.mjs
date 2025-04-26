@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@lobehub/ui'],
+  transpilePackages: ['@lobehub/ui', '@lobehub/fluent-emoji'],
   async headers() {
     return [
       {

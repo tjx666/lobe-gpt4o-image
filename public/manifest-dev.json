@@ -2,40 +2,87 @@
   "$schema": "../node_modules/@lobehub/chat-plugin-sdk/schema.json",
   "api": [
     {
-      "url": "http://localhost:3400/api/clothes",
-      "name": "recommendClothes",
-      "description": "根据用户的心情，给用户推荐他有的衣服",
+      "url": "http://localhost:3400/api/create",
+      "description": "Create images from a text-only prompt.",
+      "name": "text2image",
       "parameters": {
         "properties": {
-          "mood": {
-            "description": "用户当前的心情，可选值有：开心（happy）, 难过（sad）,生气 （anger）,害怕（fear）,惊喜（ surprise）,厌恶 （disgust）",
-            "enum": ["happy", "sad", "anger", "fear", "surprise", "disgust"],
+          "prompt": {
+            "description": "A text description of the desired image(s). The maximum length is 32000 characters for gpt-image-1, 1000 characters for dall-e-2 and 4000 characters for dall-e-3.",
             "type": "string"
           },
-          "gender": {
+          "quality": {
+            "description": "The quality of the image that will be generated. auto (default value) will automatically select the best quality for the given model. high, medium and low are supported for gpt-image-1. hd and standard are supported for dall-e-3. standard is the only option for dall-e-2.",
             "type": "string",
-            "enum": ["man", "woman"],
-            "description": "对话用户的性别，需要询问用户后才知道这个信息"
+            "enum": ["auto", "high", "medium", "low", "hd", "standard"],
+            "default": "auto"
+          },
+          "size": {
+            "description": "The size of the generated images. Must be one of 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), or auto (default value) for gpt-image-1, one of 256x256, 512x512, or 1024x1024 for dall-e-2, and one of 1024x1024, 1792x1024, or 1024x1792 for dall-e-3.",
+            "type": "string",
+            "enum": [
+              "auto",
+              "256x256",
+              "512x512",
+              "1024x1024",
+              "1536x1024",
+              "1024x1536",
+              "1792x1024",
+              "1024x1792"
+            ],
+            "default": "auto"
+          },
+          "style": {
+            "description": "The style of the generated images. This parameter is only supported for dall-e-3. Must be one of vivid or natural. Vivid causes the model to lean towards generating hyper-real and dramatic images. Natural causes the model to produce more natural, less hyper-real looking images.",
+            "type": "string",
+            "enum": ["vivid", "natural"],
+            "default": "vivid"
+          },
+          "background": {
+            "description": "Allows to set transparency for the background of the generated image(s). This parameter is only supported for gpt-image-1. Must be one of transparent, opaque or auto (default value). When auto is used, the model will automatically determine the best background for the image.",
+            "type": "string",
+            "enum": ["auto", "transparent", "opaque"],
+            "default": "auto"
+          },
+          "output_format": {
+            "description": "The format in which the generated images are returned. This parameter is only supported for gpt-image-1. Must be one of png, jpeg, or webp.",
+            "type": "string",
+            "enum": ["png", "jpeg", "webp"],
+            "default": "png"
           }
         },
-        "required": ["mood", "gender"],
+        "required": ["prompt"],
         "type": "object"
       }
     }
   ],
-  "author": "LobeHub",
-  "createdAt": "2023-09-03",
+  "author": "YuTengjing",
+  "createdAt": "2025-04-25",
   "gateway": "http://localhost:3400/api/gateway",
-  "homepage": "https://github.com/lobehub/chat-plugin-template",
-  "identifier": "plugin-identifier",
+  "homepage": "https://github.com/tjx666/lobe-gpt4o-image",
+  "identifier": "gpt4o-image-generator",
   "meta": {
     "avatar": "🚀",
-    "tags": ["template"],
-    "title": "Chat Plugin Template",
-    "description": "This is the plugin template for LobeChat plugin development"
+    "tags": ["gpt4o", "image"],
+    "title": "GPT4O Image",
+    "description": "This is the plugin for GPT4O Image Generation"
   },
+  "settings": {
+    "properties": {
+      "OPENAI_API_KEY": {
+        "description": "The API key for the OpenAI API.",
+        "type": "string"
+      },
+      "OPENAI_API_PROXY": {
+        "description": "The proxy for the OpenAI API.",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "systemRole": "当用户提供一段图像描述时，使用 gpt4o-image-generator 生成图像，并在图像生成后，用简洁自然语言总结用于生成每张图像的 prompt。请注意：每次只生成一张图像，且无论用户是否指定数量，都只生成一张。\n\n默认行为如下：\n- 每条描述必须包括图像类型（例如：照片、油画、水彩画、插画、卡通、素描、矢量图、3D 渲染等），若用户未指定类型，应至少选择其中一种类型进行生成。\n- 每条图像描述应为含三个以上句子的长段落，具体、细致、具象，含构图、颜色、人物、背景、动作等信息。\n\n关于人物：\n- 每位人物必须指明性别和种族（除非该图包含超过 3 人，可通用表达一个多样群体）。\n- 不可使用“各异”、“多种族”、“多样性”来代替具体描述。例如，应写为“一位黑人女性、一位白人男性”而不是“一对多样背景的人”。\n- 职业、角色等不可默认性别或种族，比如不可全部医生为男性、全部护士为女性，需体现现实多样性。\n\n行为限定与敏感内容管控：\n- 无论用户是否请求，最多仅生成 1 张图像。\n- 禁止生成真实公众人物（政治领袖、知名演员、创作者等）的图像。如检测到形似名字或描述，应悄悄将其替换为匿名、泛化描述，仅保留性别、体型等最低限度外观信息。\n  - 如果人物只出现在图像中作为文字内容（如标语板、杂志封面文字部分），可保留原名称。\n  - 不应提及头衔，例如，不说“总统”“女王”之类，而应用更中性词语如“政治人物”“公众人物”等。\n  - 若描述中包括艺术家、工作室名称，且未广为人知，应倾向删除该信息，或仅描述其画风，不指明具体名字。\n- 不修改 meme、虚构角色、从未露面人物的本意设定。\n- 不允许生成可能令人不适或冒犯的图像。\n\n其他：\n- 不需在生成前或生成后重复列出 prompt，只需在实际生成图像时使用一次。\n- 不需请求确认或许可，即可根据描述自动生成。\n\n总结：确保每张图像的 prompt既遵循具体规范限制，又尽可能具象、优质、美学。",
   "ui": {
-    "url": "http://localhost:3400",
+    "url": "http://localhost:3400/iframe",
     "height": 200
   },
   "version": "1"

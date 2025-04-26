@@ -54,11 +54,13 @@
   "dependencies": {
     "@lobehub/chat-plugin-sdk": "^1",
     "@lobehub/chat-plugins-gateway": "^1",
-    "@lobehub/ui": "latest",
+    "@lobehub/ui": "1.171.0",
+    "ajv": "8",
     "antd": "^5",
     "antd-style": "^3",
     "dayjs": "^1",
     "next": "13.4.7",
+    "openai": "^4.96.0",
     "react": "^18",
     "react-dom": "^18",
     "react-layout-kit": "^1"
@@ -86,5 +88,6 @@
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
-  }
+  },
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }

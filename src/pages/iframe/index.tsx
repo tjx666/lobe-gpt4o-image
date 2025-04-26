@@ -1,51 +1,31 @@
-import { lobeChat } from '@lobehub/chat-plugin-sdk/client';
-import { Button } from 'antd';
+import { lobeChat, useWatchPluginMessage } from '@lobehub/chat-plugin-sdk/client';
 import { memo, useEffect, useState } from 'react';
 import { Center } from 'react-layout-kit';
 
-import Data from '@/components/Render';
-import { fetchClothes } from '@/services/clothes';
 import { ResponseData } from '@/type';
 
 const Render = memo(() => {
-  // 初始化渲染状态
-  const [data, setData] = useState<ResponseData>();
-
-  // 初始化时从主应用同步状态
-  useEffect(() => {
-    lobeChat.getPluginMessage().then(setData);
-  }, []);
+  const { loading, data } = useWatchPluginMessage<ResponseData>();
 
   // 记录请求参数
   const [payload, setPayload] = useState<any>();
 
   useEffect(() => {
-    lobeChat.getPluginPayload().then((payload) => {
-      if (payload.name === 'recommendClothes') {
-        setPayload(payload.arguments);
-      }
-    });
-  }, []);
+    if (!loading) {
+      lobeChat.getPluginPayload().then((payload) => {
+        console.log(payload);
+        setPayload(payload);
+      });
+    }
+  }, [loading]);
 
-  const fetchData = async () => {
-    const data = await fetchClothes(payload);
-    setData(data);
-    lobeChat.setPluginMessage(data);
-  };
+  return (
+    <Center>
+      <h2>payload:</h2>
+      <pre>{JSON.stringify(payload, undefined, 2)}</pre>
 
-  return data ? (
-    <Data {...data}></Data>
-  ) : (
-    <Center style={{ height: 150 }}>
-      <Button
-        disabled={!payload}
-        onClick={() => {
-          fetchData();
-        }}
-        type={'primary'}
-      >
-        查询衣物
-      </Button>
+      <h2>data:</h2>
+      <pre>{loading ? 'loading...' : JSON.stringify(data, undefined, 2)}</pre>
     </Center>
   );
 });
